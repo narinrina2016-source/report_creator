@@ -3,8 +3,19 @@ import shutil
 import zipfile
 from datetime import datetime
 
-ARCHIVE_DIR = "archives"
-os.makedirs(ARCHIVE_DIR, exist_ok=True)
+import tempfile
+
+is_vercel = os.environ.get("VERCEL") == "1"
+if is_vercel:
+    ARCHIVE_DIR = os.path.join(tempfile.gettempdir(), "archives")
+else:
+    ARCHIVE_DIR = "archives"
+
+try:
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)
+except OSError:
+    ARCHIVE_DIR = os.path.join(tempfile.gettempdir(), "archives")
+    os.makedirs(ARCHIVE_DIR, exist_ok=True)
 
 def archive_reports(report_paths: list[str], archive_name: str = None) -> str:
     """

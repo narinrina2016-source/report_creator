@@ -10,8 +10,19 @@ from app.models.template import Template
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploaded_templates"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+import tempfile
+
+is_vercel = os.environ.get("VERCEL") == "1"
+if is_vercel:
+    UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "uploaded_templates")
+else:
+    UPLOAD_DIR = "uploaded_templates"
+
+try:
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+except OSError:
+    UPLOAD_DIR = os.path.join(tempfile.gettempdir(), "uploaded_templates")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/upload")
 def upload_template(
