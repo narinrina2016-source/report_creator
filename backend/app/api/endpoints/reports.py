@@ -7,7 +7,6 @@ from app.api import deps
 from app.models.report import Report, Approval, ExternalDispatch
 from app.models.template import Template
 from app.schemas.report import Report as ReportSchema, ReportCreate, ApprovalCreate
-from app.services.report_generator import generate_docx_report, convert_docx_to_pdf
 
 router = APIRouter()
 
