@@ -4,7 +4,6 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from datetime import datetime
-from docxtpl import DocxTemplate
 
 from app.api import deps
 from app.models.template import Template
@@ -38,14 +37,6 @@ def upload_template(
         shutil.copyfileobj(file.file, buffer)
         
     extracted_fields = {}
-    if file_path.lower().endswith('.docx'):
-        try:
-            doc = DocxTemplate(file_path)
-            variables = doc.get_undeclared_template_variables()
-            for var in variables:
-                extracted_fields[var] = "text"
-        except Exception as e:
-            print(f"Error extracting variables from {file_path}: {e}")
 
     # Insert record into database
     template = Template(
