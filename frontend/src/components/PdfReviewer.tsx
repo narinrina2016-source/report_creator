@@ -1,12 +1,6 @@
 "use client";
 
-import dynamic from 'next/dynamic';
-import React from 'react';
-
-const PdfReviewerInner = dynamic(() => import('./PdfReviewerInner').then(mod => mod.PdfReviewerInner), { 
-  ssr: false,
-  loading: () => <div className="p-4 text-center text-gray-500 border rounded min-h-[500px] flex items-center justify-center bg-gray-50">កំពុងទាញយកកម្មវិធីអាន PDF...</div>
-});
+import React, { useEffect, useState } from 'react';
 
 interface PdfReviewerProps {
   pdfUrl: string;
@@ -17,5 +11,21 @@ interface PdfReviewerProps {
 }
 
 export function PdfReviewer(props: PdfReviewerProps) {
-  return <PdfReviewerInner {...props} />;
+  const [Component, setComponent] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('./PdfReviewerInner').then(mod => {
+        setComponent(() => mod.PdfReviewerInner);
+      }).catch(err => {
+        console.error("Failed to load PdfReviewer", err);
+      });
+    }
+  }, []);
+
+  if (!Component) {
+    return <div className="p-4 text-center text-gray-500 border rounded min-h-[500px] flex items-center justify-center bg-gray-50">កំពុងទាញយកកម្មវិធីអាន PDF...</div>;
+  }
+
+  return <Component {...props} />;
 }
