@@ -4,8 +4,9 @@ from datetime import datetime
 
 class ReportBase(BaseModel):
     title: str
-    template_id: int
-    data: Dict[str, Any]
+    template_id: Optional[int] = None
+    data: Optional[Dict[str, Any]] = None
+    pdf_url: Optional[str] = None
 
 class ReportCreate(ReportBase):
     pass

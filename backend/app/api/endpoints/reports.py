@@ -18,18 +18,16 @@ def create_report(
     report_in: ReportCreate
 ) -> Any:
     """
-    Create a new report, fill data into DOCX template.
+    Create a new report from an uploaded PDF.
     """
-    template = db.query(Template).filter(Template.id == report_in.template_id).first()
-    if not template:
-        raise HTTPException(status_code=404, detail="Template not found")
-        
     report = Report(
         title=report_in.title,
         template_id=report_in.template_id,
-        created_by=1, # Mock user ID since we removed current_user
-        data=report_in.data,
-        status="Draft"
+        created_by=1, # Mock user ID
+        data=report_in.data or {},
+        status="Draft",
+        pdf_url=report_in.pdf_url,
+        generated_file_path=report_in.pdf_url # Using the same field for compatibility with frontend
     )
     db.add(report)
     db.commit()
@@ -43,22 +41,8 @@ def create_report(
     report_data["ReferenceNumber"] = ref_number
     report.data = report_data
     
-    # Generate the physical DOCX file using docxtpl
-    if template.file_path and os.path.exists(template.file_path):
-        try:
-            output_path = generate_docx_report(
-                template_path=template.file_path,
-                context=report.data,
-                report_id=report.id
-            )
-            report.generated_file_path = output_path
-            db.commit()
-            db.refresh(report)
-        except Exception as e:
-            print(f"Error generating DOCX: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to generate report document: {e}")
-    else:
-        raise HTTPException(status_code=400, detail="Template file is missing. Please upload a .docx file for this template first.")
+    db.commit()
+    db.refresh(report)
         
     return report
 
@@ -70,16 +54,12 @@ def update_report(
     report_in: ReportCreate
 ) -> Any:
     """
-    Update an existing report and regenerate the DOCX file.
+    Update an existing report (no document generation).
     """
     report = db.query(Report).filter(Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
         
-    template = db.query(Template).filter(Template.id == report_in.template_id).first()
-    if not template:
-        raise HTTPException(status_code=404, detail="Template not found")
-
     report.title = report_in.title
     report.template_id = report_in.template_id
     
@@ -90,22 +70,11 @@ def update_report(
         report_data["ReferenceNumber"] = f"{report.id:03d}/{year} របក"
         
     report.data = report_data
-    report.annotations = [] # Clear annotations since the document is changing
+    report.annotations = [] # Clear annotations since the document might be changing
     
-    # Regenerate the physical DOCX file
-    if template.file_path and os.path.exists(template.file_path):
-        try:
-            output_path = generate_docx_report(
-                template_path=template.file_path,
-                context=report.data,
-                report_id=report.id
-            )
-            report.generated_file_path = output_path
-        except Exception as e:
-            print(f"Error regenerating DOCX: {e}")
-            raise HTTPException(status_code=500, detail=f"Failed to regenerate report document: {e}")
-    else:
-        raise HTTPException(status_code=400, detail="Template file is missing.")
+    if report_in.pdf_url:
+        report.pdf_url = report_in.pdf_url
+        report.generated_file_path = report_in.pdf_url
         
     db.commit()
     db.refresh(report)
@@ -136,25 +105,6 @@ def approve_report(
     
     # Update report status based on workflow rules
     report.status = approval_in.status
-    
-    if report.status == "Approved" and report.generated_file_path and report.generated_file_path.endswith('.docx'):
-        try:
-            # Re-generate the DOCX with the signature
-            template = db.query(Template).filter(Template.id == report.template_id).first()
-            if template and template.file_path and os.path.exists(template.file_path):
-                new_docx_path = generate_docx_report(
-                    template_path=template.file_path,
-                    context=report.data,
-                    report_id=report.id,
-                    include_signature=True
-                )
-                report.generated_file_path = new_docx_path
-                
-            # Convert the signed DOCX to PDF
-            pdf_path = convert_docx_to_pdf(report.generated_file_path)
-            report.generated_file_path = pdf_path
-        except Exception as e:
-            print(f"Error converting to PDF: {e}")
             
     db.commit()
     db.refresh(report)
@@ -223,15 +173,6 @@ def get_report_html(
             "html_content": report.html_content,
             "original_html_content": report.original_html_content
         }
-        
-    # Convert from DOCX if HTML not saved yet
-    if report.generated_file_path and report.generated_file_path.endswith('.docx') and os.path.exists(report.generated_file_path):
-        with open(report.generated_file_path, "rb") as docx_file:
-            result = mammoth.convert_to_html(docx_file)
-            report.html_content = result.value
-            report.original_html_content = result.value
-            db.commit()
-            return {"html_content": result.value, "original_html_content": result.value}
             
     return {"html_content": "<p>ទិន្នន័យឯកសារមិនអាចទាញយកបានទេ។</p>"}
 
@@ -246,57 +187,6 @@ def update_report_html(
         raise HTTPException(status_code=404, detail="Report not found")
         
     report.html_content = data.html_content
-    
-    # We also need to generate a PDF from this HTML so that the PDF view matches the Editor view!
-    pdf_path = report.generated_file_path.replace(".docx", "_edited.pdf").replace(".pdf", "_edited.pdf") if report.generated_file_path else f"generated_reports/report_{report_id}_edited.pdf"
-    
-    import os
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-    
-    font_dir = os.path.abspath(os.path.join("app", "assets", "fonts"))
-    
-    fonts_to_register = [
-        ('Khmer OS Battambang', 'KhmerOSbattambang.ttf'),
-        ('Khmer OS Muol Light', 'KhmerOSmuollight.ttf'),
-        ('Khmer OS Content', 'KhmerOScontent.ttf'),
-        ('Khmer OS Siemreap', 'KhmerOSsiemreap.ttf'),
-        ('Khmer OS Bokor', 'KhmerOSbokor.ttf'),
-        ('Khmer OS Muol', 'KhmerOSmuol.ttf'),
-        ('Khmer OS Sys', 'KhmerOSsys.ttf'),
-        ('Khmer OS', 'KhmerOS.ttf')
-    ]
-    
-    for family, filename in fonts_to_register:
-        font_file_path = os.path.join(font_dir, filename)
-        if os.path.exists(font_file_path):
-            try:
-                pdfmetrics.registerFont(TTFont(family, font_file_path))
-            except Exception as e:
-                print(f"Could not register font {family}: {e}")
-    
-    html_with_style = f"""
-    <html>
-    <head>
-    <style>
-        body {{ font-family: 'Khmer OS Battambang', 'Khmer OS', Arial, sans-serif; padding: 20px; }}
-        /* Ensure images fit within page */
-        img {{ max-width: 100%; height: auto; }}
-    </style>
-    </head>
-    <body>
-    {data.html_content}
-    </body>
-    </html>
-    """
-    
-    from xhtml2pdf import pisa
-    with open(pdf_path, "wb") as pdf_file:
-        pisa_status = pisa.CreatePDF(html_with_style, dest=pdf_file)
-        
-    if not pisa_status.err:
-        report.generated_file_path = pdf_path
-        
     db.commit()
         
     return {"message": "Saved successfully"}
@@ -399,45 +289,11 @@ def finalize_report(
     report.status = "Finalized"
     
     db.add(Approval(report_id=report.id, approver_id=1, status="Finalized", comments=f"Issued Reference Number: {data.reference_number}"))
-    
-    # Generate QR Code if requested
-    qr_img_path = None
-    if data.include_qr:
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        # The data can be a verification URL
-        qr.add_data(f"http://localhost:3000/verify/{report.id}?ref={data.reference_number}")
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-        qr_filename = f"qr_{report.id}_{uuid.uuid4().hex[:8]}.png"
-        qr_img_path = os.path.join("uploads", qr_filename)
-        img.save(qr_img_path)
-        report.qr_code_path = qr_img_path
-
-    # Re-generate PDF with reference number and QR code
-    if report.html_content:
-        # Inject Ref Number
-        final_html = f"<div style='text-align:right; font-weight:bold;'>លេខ: {data.reference_number}</div>" + report.html_content
-        
-        # Inject QR Code at the bottom
-        if qr_img_path:
-            abs_qr_path = os.path.abspath(qr_img_path)
-            final_html += f"<div style='text-align:right; margin-top:50px;'><img src='{abs_qr_path}' width='100' height='100'/></div>"
-
-        pdf_path = f"uploads/final_{report.id}.pdf"
-        with open(pdf_path, "w+b") as out_pdf:
-            pisa.CreatePDF(final_html, dest=out_pdf)
-        
-        report.generated_file_path = pdf_path
-        
     db.commit()
     return {"message": "Report finalized successfully", "pdf_path": report.generated_file_path}
 
 from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 import os
 
 @router.get("/{report_id}/download")
@@ -446,32 +302,25 @@ def download_report(
     db: Session = Depends(deps.get_db)
 ):
     """
-    Download the generated DOCX report.
+    Download or redirect to the uploaded PDF report.
     """
     report = db.query(Report).filter(Report.id == report_id).first()
-    if not report or not report.generated_file_path:
+    if not report or not report.pdf_url:
         raise HTTPException(status_code=404, detail="Report file not found")
         
-    if not os.path.exists(report.generated_file_path):
-        raise HTTPException(status_code=404, detail="Physical file missing on server")
+    # If it's a Supabase storage URL, redirect to it
+    if report.pdf_url.startswith("http"):
+        return RedirectResponse(url=report.pdf_url)
         
+    # Legacy local files (if any remain)
     serve_path = report.generated_file_path
-    if serve_path.endswith(".docx"):
-        # Convert to PDF so that PdfReviewer can read it
-        pdf_path = serve_path.replace(".docx", ".pdf")
-        if not os.path.exists(pdf_path):
-            from app.services.report_generator import convert_docx_to_pdf
-            serve_path = convert_docx_to_pdf(serve_path)
-        else:
-            serve_path = pdf_path
+    if not serve_path or not os.path.exists(serve_path):
+        raise HTTPException(status_code=404, detail="Physical file missing on server")
 
-    is_pdf = serve_path.endswith(".pdf")
-    media_type = "application/pdf" if is_pdf else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        
     return FileResponse(
         path=serve_path,
         filename=os.path.basename(serve_path),
-        media_type=media_type,
+        media_type="application/pdf",
         content_disposition_type="inline"
     )
 

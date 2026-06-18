@@ -8,7 +8,5 @@ passlib[bcrypt]
 pydantic
 pydantic-settings
 python-multipart
-docxtpl
 google-generativeai
-pdfkit
 python-dotenv

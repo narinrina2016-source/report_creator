@@ -18,8 +18,9 @@ class Report(Base):
     reference_number = Column(String, nullable=True) # Finalized reference number
     qr_code_path = Column(String, nullable=True) # Optional QR Code image path
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    data = Column(JSON) # JSON payload of filled form data
-    generated_file_path = Column(String, nullable=True)
+    data = Column(JSON, nullable=True)
+    generated_file_path = Column(String, nullable=True) # Will store Supabase URL now
+    pdf_url = Column(String, nullable=True)
     html_content = Column(String, nullable=True) # For In-App Editor
     original_html_content = Column(String, nullable=True) # For diffing against Editor's changes
     annotations = Column(JSON, nullable=True) # Stores PDF highlights and comments
