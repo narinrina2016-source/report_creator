@@ -2,9 +2,17 @@ import traceback
 import sys
 
 # Define app globally so Vercel can find it
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="ARMS API Fallback", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 try:
     from app.core.config import settings
@@ -37,14 +45,6 @@ try:
             print(f"Error seeding default admin: {e}")
         finally:
             db.close()
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
     @app.get("/api/v1/setup-db")
     def setup_database():
@@ -100,6 +100,6 @@ except Exception as e:
     print("FATAL STARTUP ERROR:", error_tb)
     
     # Create fallback routes to show error
-    @app.get("/{path:path}")
-    def fallback_error(path: str):
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+    def fallback_error(request: Request, path: str):
         return {"error": "Fatal Error during startup", "traceback": error_tb}
