@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { CheckCircle, XCircle, FileText, Download, ExternalLink, X, Wand2, Pencil, Maximize2, Send, Clock, Circle } from "lucide-react";
 
 export default function ReportsPage() {
@@ -48,6 +49,9 @@ export default function ReportsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [enhancingFields, setEnhancingFields] = useState<{[key: string]: boolean}>({});
   const [editingReportId, setEditingReportId] = useState<number | null>(null);
+  // PDF Upload State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
 
   const handleEditClick = (report: any) => {
     setEditingReportId(report.id);
@@ -258,17 +262,40 @@ export default function ReportsPage() {
     }
   };
 
+  
   const handleGenerate = async () => {
     if (!reportTitle || !selectedTemplateId) {
-      alert("Please enter title and select a template");
+      alert("Please enter title and select a category");
       return;
     }
     setIsGenerating(true);
     try {
+      let pdfUrl = "";
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('reports')
+          .upload(filePath, selectedFile);
+          
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('reports')
+          .getPublicUrl(filePath);
+          
+        pdfUrl = publicUrlData.publicUrl;
+      }
+
       const payload = {
         title: reportTitle,
         template_id: parseInt(selectedTemplateId),
-        data: formData
+        data: formData,
+        pdf_url: pdfUrl || (editingReportId ? undefined : null) // Keep old URL if editing and no new file
       };
       
       const url = editingReportId 
@@ -284,16 +311,17 @@ export default function ReportsPage() {
         setIsModalOpen(false);
         setReportTitle("");
         setSelectedTemplateId("");
+        setSelectedFile(null);
         setFormData({});
         setEditingReportId(null);
         fetchReports();
       } else {
         const errData = await res.json();
-        alert(`Failed to generate report: ${errData.detail || 'Unknown error'}`);
+        alert(`Failed to save report: ${errData.detail || 'Unknown error'}`);
       }
     } catch (e) {
       console.error(e);
-      alert("Error generating report");
+      alert("Error saving report or uploading file");
     } finally {
       setIsGenerating(false);
     }
@@ -567,46 +595,23 @@ export default function ReportsPage() {
                 </select>
               </div>
 
-              {dynamicFields.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-bold text-gray-900 mb-3">វាលទិន្នន័យ (Template Fields)</h4>
-                  <div className="space-y-3">
-                    {dynamicFields.map(([fieldName, fieldType]) => (
-                      <div key={fieldName}>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="block text-xs font-medium text-gray-700">{fieldName}</label>
-                          {fieldType === "text" && (
-                            <button 
-                              onClick={() => handleAIEnhance(fieldName, formData[fieldName])}
-                              disabled={!formData[fieldName] || enhancingFields[fieldName]}
-                              title="ឲ្យ AI ជួយកែសម្រួលអត្ថបទ"
-                              className="text-xs flex items-center space-x-1 text-purple-600 hover:text-purple-800 disabled:text-gray-400"
-                            >
-                              <Wand2 className="h-3 w-3" />
-                              <span>{enhancingFields[fieldName] ? "កំពុងកែសម្រួល..." : "AI ជួយសរសេរ"}</span>
-                            </button>
-                          )}
-                        </div>
-                        {fieldType === "text" && (formData[fieldName] || "").length > 50 ? (
-                          <textarea 
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                            rows={3}
-                            value={formData[fieldName] || ""}
-                            onChange={e => setFormData({ ...formData, [fieldName]: e.target.value })}
-                          />
-                        ) : (
-                          <input 
-                            type={fieldType === "number" ? "number" : fieldType === "date" ? "date" : "text"}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-                            value={formData[fieldName] || ""}
-                            onChange={e => setFormData({ ...formData, [fieldName]: e.target.value })}
-                          />
-                        )}
-                      </div>
-                    ))}
+              
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <h4 className="text-sm font-bold text-gray-900 mb-3">បង្ហោះឯកសារ PDF (Upload PDF Document)</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">ជ្រើសរើសឯកសារ (.pdf)</label>
+                    <input 
+                      type="file" 
+                      accept="application/pdf"
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                    />
+                    {editingReportId && <p className="text-xs text-gray-500 mt-1">ទុកចោលបើមិនចង់ប្តូរឯកសារថ្មី</p>}
                   </div>
                 </div>
-              )}
+              </div>
+
             </div>
 
             <div className="p-4 border-t bg-gray-50 flex justify-end space-x-3">
