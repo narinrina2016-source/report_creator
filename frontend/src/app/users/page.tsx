@@ -18,7 +18,7 @@ export default function UsersPage() {
   }, []);
 
   const fetchUsers = async () => {
-    const res = await fetch("http://localhost:8000/api/v1/users");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/users`);
     if (res.ok) {
       setUsers(await res.json());
     }
@@ -30,7 +30,7 @@ export default function UsersPage() {
       if (!updateData.password) {
         delete (updateData as any).password;
       }
-      const res = await fetch(`http://localhost:8000/api/v1/users/${editingUserId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/users/${editingUserId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData)
@@ -42,7 +42,7 @@ export default function UsersPage() {
         alert("បរាជ័យក្នុងការកែប្រែគណនី។");
       }
     } else {
-      const res = await fetch("http://localhost:8000/api/v1/users", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -61,7 +61,7 @@ export default function UsersPage() {
 
   const handleDelete = async (id: number) => {
     if (confirm("តើអ្នកពិតជាចង់លុបគណនីនេះមែនទេ? (Are you sure you want to delete this user?)")) {
-      const res = await fetch(`http://localhost:8000/api/v1/users/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/users/${id}`, {
         method: "DELETE"
       });
       if (res.ok) {

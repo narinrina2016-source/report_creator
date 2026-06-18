@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/v1/settings/TEMPLATE_CATEGORIES")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/settings/TEMPLATE_CATEGORIES`)
       .then(res => res.json())
       .then(data => {
         if (data.value && Array.isArray(data.value)) {
@@ -21,7 +21,7 @@ export default function SettingsPage() {
       })
       .catch(err => console.error("Error fetching settings:", err));
 
-    fetch("http://localhost:8000/api/v1/settings/VISITOR_TYPES")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/settings/VISITOR_TYPES`)
       .then(res => res.json())
       .then(data => {
         if (data.value && Array.isArray(data.value)) {
@@ -67,12 +67,12 @@ export default function SettingsPage() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      const p1 = fetch("http://localhost:8000/api/v1/settings/TEMPLATE_CATEGORIES", {
+      const p1 = fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/settings/TEMPLATE_CATEGORIES`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: categories }),
       });
-      const p2 = fetch("http://localhost:8000/api/v1/settings/VISITOR_TYPES", {
+      const p2 = fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/settings/VISITOR_TYPES`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ value: visitorTypes }),

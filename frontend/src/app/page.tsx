@@ -1,5 +1,7 @@
 import { FileText, Clock, CheckCircle, TrendingUp } from "lucide-react";
-import { OverviewChart } from "@/components/dashboard/OverviewChart";
+import dynamic from "next/dynamic";
+
+const OverviewChart = dynamic(() => import("@/components/dashboard/OverviewChart").then(mod => mod.OverviewChart), { ssr: false });
 
 export default function Home() {
   return (

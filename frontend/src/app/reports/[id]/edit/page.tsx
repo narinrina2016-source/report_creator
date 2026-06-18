@@ -13,7 +13,7 @@ export default function AdvancedEditor({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     const fetchAnnotations = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/reports/${id}/annotations`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${id}/annotations`);
         if (res.ok) {
           const data = await res.json();
           setAnnotations(data.annotations || []);
@@ -29,7 +29,7 @@ export default function AdvancedEditor({ params }: { params: Promise<{ id: strin
 
   const handleSaveAnnotations = async (newAnnotations: any[]) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${id}/annotations`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${id}/annotations`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ annotations: newAnnotations })
@@ -45,7 +45,7 @@ export default function AdvancedEditor({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const pdfUrl = `http://localhost:8000/api/v1/reports/${id}/download`;
+  const pdfUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${id}/download`;
 
   if (isLoading) return <div className="p-10 text-center">កំពុងទាញយកទិន្នន័យ...</div>;
 

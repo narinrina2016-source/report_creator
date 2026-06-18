@@ -12,7 +12,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     const fetchVerification = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/v1/reports/${id}/verify`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${id}/verify`);
         if (res.ok) {
           const result = await res.json();
           setData(result);

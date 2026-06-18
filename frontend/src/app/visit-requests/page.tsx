@@ -26,7 +26,7 @@ export default function VisitRequestsPage() {
   const fetchRequests = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:8000/api/v1/visit-requests/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/visit-requests/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -41,7 +41,7 @@ export default function VisitRequestsPage() {
   const fetchUsers = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:8000/api/v1/users/", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/users/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -56,7 +56,7 @@ export default function VisitRequestsPage() {
   const handleAssign = async () => {
     if (!selectedReqId || !assigneeId) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/visit-requests/${selectedReqId}/assign?assigned_to=${assigneeId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/visit-requests/${selectedReqId}/assign?assigned_to=${assigneeId}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -72,7 +72,7 @@ export default function VisitRequestsPage() {
   const handleDecide = async () => {
     if (!selectedReqId) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/visit-requests/${selectedReqId}/decide?status=${decision}&comments=${encodeURIComponent(comments)}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/visit-requests/${selectedReqId}/decide?status=${decision}&comments=${encodeURIComponent(comments)}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` }
       });

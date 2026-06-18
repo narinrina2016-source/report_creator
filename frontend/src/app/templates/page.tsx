@@ -20,7 +20,7 @@ export default function TemplatesPage() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/templates/");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/templates/`);
       if (res.ok) {
         const data = await res.json();
         setTemplatesList(data);
@@ -44,7 +44,7 @@ export default function TemplatesPage() {
     fetchTemplates();
     
     // Fetch categories
-    fetch("http://localhost:8000/api/v1/settings/TEMPLATE_CATEGORIES")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/settings/TEMPLATE_CATEGORIES`)
       .then(res => res.json())
       .then(data => {
         if (data.value && Array.isArray(data.value)) {
@@ -94,7 +94,7 @@ export default function TemplatesPage() {
     formData.append("category", "General");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/templates/upload", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/templates/upload`, {
         method: "POST",
         body: formData,
       });
@@ -137,8 +137,8 @@ export default function TemplatesPage() {
 
     try {
       const url = templateId 
-        ? `http://localhost:8000/api/v1/templates/${templateId}` 
-        : `http://localhost:8000/api/v1/templates`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/templates/${templateId}` 
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/templates`;
       
       const method = templateId ? "PUT" : "POST";
 

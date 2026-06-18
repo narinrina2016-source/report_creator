@@ -61,7 +61,7 @@ export default function ReportsPage() {
     if (!text || text.trim() === "") return;
     setEnhancingFields(prev => ({ ...prev, [fieldName]: true }));
     try {
-      const res = await fetch("http://localhost:8000/api/v1/ai/enhance", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/ai/enhance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text })
@@ -84,7 +84,7 @@ export default function ReportsPage() {
     setIsLoadingTracking(true);
     setIsTrackingModalOpen(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${reportId}/tracking`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${reportId}/tracking`);
       if (res.ok) {
         const data = await res.json();
         setTrackingData(data);
@@ -111,7 +111,7 @@ export default function ReportsPage() {
     if (!dispatchReportId || !dispatchInstitution || !dispatchMethod) return;
     setIsSubmittingDispatch(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${dispatchReportId}/dispatch`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${dispatchReportId}/dispatch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,7 +138,7 @@ export default function ReportsPage() {
     setDispatchHistoryReportId(reportId);
     setIsDispatchHistoryModalOpen(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${reportId}/dispatches`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${reportId}/dispatches`);
       if (res.ok) {
         const data = await res.json();
         setDispatchHistoryData(data);
@@ -150,7 +150,7 @@ export default function ReportsPage() {
 
   const handleReceiveDispatch = async (dispatchId: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/dispatches/${dispatchId}/receive`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/dispatches/${dispatchId}/receive`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -169,21 +169,21 @@ export default function ReportsPage() {
 
   const fetchReports = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/reports/");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/reports/`);
       if (res.ok) setReports(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/templates/");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/templates/`);
       if (res.ok) setTemplates(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/v1/users/");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/users/`);
       if (res.ok) setUsers(await res.json());
     } catch (e) { console.error(e); }
   };
@@ -196,7 +196,7 @@ export default function ReportsPage() {
 
   const handleApprove = async (id: number) => {
     try {
-      await fetch(`http://localhost:8000/api/v1/reports/${id}/approve`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "Approved", comments: "Approved by manager" })
@@ -207,7 +207,7 @@ export default function ReportsPage() {
 
   const handleReject = async (id: number) => {
     try {
-      await fetch(`http://localhost:8000/api/v1/reports/${id}/approve`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "Returned for Revision", comments: "Needs work" })
@@ -222,7 +222,7 @@ export default function ReportsPage() {
                      assignRole === "Department Head" ? "assign_department_head" :
                      assignRole === "Admin" ? "assign_admin" : "assign_president";
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${assignReportId}/${endpoint}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${assignReportId}/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: parseInt(selectedUserId) })
@@ -242,7 +242,7 @@ export default function ReportsPage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/reports/${finalizeReportId}/finalize`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${finalizeReportId}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reference_number: finalizeRefNumber, include_qr: finalizeIncludeQr })
@@ -272,8 +272,8 @@ export default function ReportsPage() {
       };
       
       const url = editingReportId 
-        ? `http://localhost:8000/api/v1/reports/${editingReportId}`
-        : "http://localhost:8000/api/v1/reports/";
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${editingReportId}`
+        : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/reports/`;
         
       const res = await fetch(url, {
         method: editingReportId ? "PUT" : "POST",
@@ -351,7 +351,7 @@ export default function ReportsPage() {
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2 flex justify-end">
                   {report.generated_file_path ? (
                     <a 
-                      href={`http://localhost:8000/api/v1/reports/${report.id}/download`} 
+                      href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${report.id}/download`} 
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-500 hover:text-blue-900" 
@@ -389,7 +389,7 @@ export default function ReportsPage() {
                         <Clock className="h-5 w-5" />
                       </button>
                       <button onClick={() => {
-                        fetch(`http://localhost:8000/api/v1/reports/${report.id}/approve`, {
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${report.id}/approve`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ status: "Editor Reviewed", comments: "Reviewed by Editor" })
@@ -421,7 +421,7 @@ export default function ReportsPage() {
                         <Clock className="h-5 w-5" />
                       </button>
                       <button onClick={() => {
-                        fetch(`http://localhost:8000/api/v1/reports/${report.id}/approve`, {
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${report.id}/approve`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ status: "Department Head Reviewed", comments: "Reviewed by Dept Head" })
@@ -453,7 +453,7 @@ export default function ReportsPage() {
                         <Clock className="h-5 w-5" />
                       </button>
                       <button onClick={() => {
-                        fetch(`http://localhost:8000/api/v1/reports/${report.id}/approve`, {
+                        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${report.id}/approve`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ status: "Admin Reviewed", comments: "Reviewed by Admin" })
@@ -507,7 +507,7 @@ export default function ReportsPage() {
                         <button onClick={() => handleTrackingClick(report.id)} className="text-gray-500 hover:text-gray-900 mr-2" title="Track Document">
                           <Clock className="h-5 w-5" />
                         </button>
-                        <a href={`http://localhost:8000/api/v1/reports/${report.id}/download`} target="_blank" className="text-indigo-600 hover:text-indigo-900 mr-2" title="មើលឯកសារ (View Document)">
+                        <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/reports/${report.id}/download`} target="_blank" className="text-indigo-600 hover:text-indigo-900 mr-2" title="មើលឯកសារ (View Document)">
                           <ExternalLink className="h-5 w-5" />
                         </a>
                         <button onClick={() => { setDispatchReportId(report.id); setIsDispatchModalOpen(true); }} className="text-orange-600 hover:text-orange-900 bg-orange-50 px-2 py-1 rounded border border-orange-200 text-sm flex items-center shadow-sm mr-2" title="Dispatch Document">

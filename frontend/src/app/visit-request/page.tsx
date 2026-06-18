@@ -25,7 +25,7 @@ export default function PublicVisitRequestPage() {
   const [visitorTypes, setVisitorTypes] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/v1/settings/VISITOR_TYPES")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/settings/VISITOR_TYPES`)
       .then(res => res.json())
       .then(data => {
         if (data.value && Array.isArray(data.value) && data.value.length > 0) {
@@ -68,7 +68,7 @@ export default function PublicVisitRequestPage() {
         file_path: fileBase64
       };
       
-      const res = await fetch("http://localhost:8000/api/v1/visit-requests/public", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/visit-requests/public`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

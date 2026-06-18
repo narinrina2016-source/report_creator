@@ -24,7 +24,7 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/documents/?type=${activeTab}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/documents/?type=${activeTab}`);
       if (res.ok) {
         const data = await res.json();
         setDocuments(data);
@@ -59,7 +59,7 @@ export default function DocumentsPage() {
     };
 
     try {
-      const url = docId ? `http://localhost:8000/api/v1/documents/${docId}` : `http://localhost:8000/api/v1/documents/`;
+      const url = docId ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/documents/${docId}` : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/documents/`;
       const method = docId ? "PUT" : "POST";
       
       const res = await fetch(url, {
@@ -81,7 +81,7 @@ export default function DocumentsPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("តើអ្នកពិតជាចង់លុបឯកសារនេះមែនទេ?")) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/documents/${id}`, { method: "DELETE" });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/documents/${id}`, { method: "DELETE" });
       if (res.ok) {
         fetchDocuments();
       }

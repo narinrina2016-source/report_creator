@@ -32,7 +32,7 @@ export default function TrackRequestPage() {
   useEffect(() => {
     if (!token) return;
 
-    fetch(`http://localhost:8000/api/v1/visit-requests/track/${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/visit-requests/track/${token}`)
       .then(async (res) => {
         if (!res.ok) {
           throw new Error("មិនរកឃើញសំណើរបស់អ្នកទេ។ សូមពិនិត្យមើល Link ឬ QR Code ឡើងវិញ។");
