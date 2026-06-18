@@ -122,7 +122,6 @@ def get_reports(
     reports = db.query(Report).offset(skip).limit(limit).all()
     return reports
 
-import mammoth
 from pydantic import BaseModel
 
 class HTMLUpdate(BaseModel):
@@ -270,8 +269,6 @@ class FinalizeData(BaseModel):
     reference_number: str
     include_qr: bool
 
-import qrcode
-from xhtml2pdf import pisa
 import uuid
 
 @router.post("/{report_id}/finalize")
