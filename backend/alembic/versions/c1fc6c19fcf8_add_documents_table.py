@@ -31,7 +31,7 @@ def upgrade() -> None:
     sa.Column('file_path', sa.String(), nullable=True),
     sa.Column('status', sa.String(), nullable=True),
     sa.Column('notes', sa.String(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_documents_id'), 'documents', ['id'], unique=False)

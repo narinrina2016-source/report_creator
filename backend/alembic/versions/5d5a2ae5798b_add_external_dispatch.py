@@ -27,7 +27,7 @@ def upgrade() -> None:
     sa.Column('institution_name', sa.String(), nullable=True),
     sa.Column('dispatch_method', sa.String(), nullable=True),
     sa.Column('status', sa.String(), nullable=True),
-    sa.Column('sent_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('sent_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('received_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('dispatch_photo', sa.String(), nullable=True),
     sa.Column('receive_photo', sa.String(), nullable=True),

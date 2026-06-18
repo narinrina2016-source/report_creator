@@ -34,7 +34,7 @@ def upgrade() -> None:
     sa.Column('status', sa.String(), nullable=True),
     sa.Column('comments', sa.String(), nullable=True),
     sa.Column('assigned_to', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.ForeignKeyConstraint(['assigned_to'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
