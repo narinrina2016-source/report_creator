@@ -1,16 +1,24 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.router import api_router
 from app.core.config import settings
 from app.core.database import engine, Base, SessionLocal
 from app.models import setting, template, user, report
 from app.core.security import get_password_hash
+import traceback
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Automated Report Management System API",
     version="1.0.0",
 )
+
+try:
+    from app.api.router import api_router
+    router_loaded = True
+except Exception as e:
+    error_tb = traceback.format_exc()
+    router_loaded = False
+    print("Error loading router:", error_tb)
 
 @app.on_event("startup")
 def startup_event():
@@ -87,8 +95,15 @@ def setup_database():
         
     return results
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+if router_loaded:
+    app.include_router(api_router, prefix=settings.API_V1_STR)
+else:
+    @app.get("/{path:path}")
+    def fallback_error(path: str):
+        return {"error": "Router failed to load", "traceback": error_tb}
 
 @app.get("/")
 def read_root():
+    if not router_loaded:
+        return {"error": "Router failed to load", "traceback": error_tb}
     return {"message": "Welcome to ARMS API"}
