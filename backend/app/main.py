@@ -43,6 +43,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/api/v1/setup-db")
+def setup_database():
+    """Run Alembic migrations to set up the database schema."""
+    import alembic.config
+    import os
+    try:
+        alembic_args = [
+            '--raiseerr',
+            'upgrade', 'head',
+        ]
+        alembic_ini_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "alembic.ini")
+        alembic.config.main(argv=['-c', alembic_ini_path, *alembic_args])
+        return {"message": "Database setup completed successfully!"}
+    except Exception as e:
+        return {"error": str(e), "message": "Failed to setup database. Check Vercel logs."}
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
