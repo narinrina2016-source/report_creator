@@ -6,8 +6,6 @@ from app.core.database import engine, Base, SessionLocal
 from app.models import setting, template, user, report
 from app.core.security import get_password_hash
 
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Automated Report Management System API",
@@ -45,19 +43,49 @@ app.add_middleware(
 
 @app.get("/api/v1/setup-db")
 def setup_database():
-    """Run Alembic migrations to set up the database schema."""
+    """Set up the database schema."""
     import alembic.config
     import os
+    results = {}
+    
+    # Method 1: SQLAlchemy create_all (Works for all models defined)
     try:
-        alembic_args = [
-            '--raiseerr',
-            'upgrade', 'head',
-        ]
+        Base.metadata.create_all(bind=engine)
+        results["sqlalchemy"] = "Tables created successfully via SQLAlchemy"
+    except Exception as e:
+        results["sqlalchemy_error"] = str(e)
+        
+    # Method 2: Alembic
+    try:
+        alembic_args = ['--raiseerr', 'upgrade', 'head']
         alembic_ini_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "alembic.ini")
         alembic.config.main(argv=['-c', alembic_ini_path, *alembic_args])
-        return {"message": "Database setup completed successfully!"}
+        results["alembic"] = "Migrations applied successfully"
     except Exception as e:
-        return {"error": str(e), "message": "Failed to setup database. Check Vercel logs."}
+        results["alembic_error"] = str(e)
+        
+    # Create superuser
+    try:
+        db = SessionLocal()
+        admin = db.query(user.User).filter(user.User.email == settings.FIRST_SUPERUSER_EMAIL).first()
+        if not admin:
+            admin_user = user.User(
+                email=settings.FIRST_SUPERUSER_EMAIL,
+                hashed_password=get_password_hash(settings.FIRST_SUPERUSER_PASSWORD),
+                full_name="System Administrator",
+                role="Admin",
+                is_active=True
+            )
+            db.add(admin_user)
+            db.commit()
+            results["superuser"] = "Superuser created successfully"
+        else:
+            results["superuser"] = "Superuser already exists"
+        db.close()
+    except Exception as e:
+        results["superuser_error"] = str(e)
+        
+    return results
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
