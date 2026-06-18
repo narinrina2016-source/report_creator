@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     TELEGRAM_BOT_TOKEN: str = "" # To be configured later by the user
     TELEGRAM_GROUP_CHAT_ID: str = "" # To be configured later by the user
     
+    FIRST_SUPERUSER_EMAIL: str = "admin@example.com"
+    FIRST_SUPERUSER_PASSWORD: str = "password123"
+    
     DATABASE_URL: str | None = None
     
     @property

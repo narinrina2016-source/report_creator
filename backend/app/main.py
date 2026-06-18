@@ -18,11 +18,11 @@ app = FastAPI(
 def startup_event():
     db = SessionLocal()
     try:
-        admin = db.query(user.User).filter(user.User.email == "admin@example.com").first()
+        admin = db.query(user.User).filter(user.User.email == settings.FIRST_SUPERUSER_EMAIL).first()
         if not admin:
             admin_user = user.User(
-                email="admin@example.com",
-                hashed_password=get_password_hash("password123"),
+                email=settings.FIRST_SUPERUSER_EMAIL,
+                hashed_password=get_password_hash(settings.FIRST_SUPERUSER_PASSWORD),
                 full_name="System Administrator",
                 role="Admin",
                 is_active=True
